@@ -3,7 +3,7 @@ import type { CharacterKey } from "./game-data";
 
 const ADMIN_FALLBACK = "silenthill2026";
 function checkKey(key: string) {
-  const expected = process.env.ADMIN_KEY || ADMIN_FALLBACK;
+  const expected = process.env['ADMIN_KEY'] || ADMIN_FALLBACK;
   if (key !== expected) throw new Error("Invalid admin key");
 }
 

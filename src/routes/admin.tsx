@@ -5,7 +5,7 @@ import { adminReset, adminSeed, adminStats } from "@/lib/game.functions";
 import { CHARACTERS, CHARACTER_KEYS } from "@/lib/game-data";
 
 export const Route = createFileRoute("/admin")({
-  validateSearch: (s: Record<string, unknown>) => ({ key: typeof s.key === "string" ? s.key : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({ key: typeof s['key'] === "string" ? s['key'] : "" }),
   head: () => ({
     meta: [
       { title: "Presenter Admin — Silent Hill Test" },

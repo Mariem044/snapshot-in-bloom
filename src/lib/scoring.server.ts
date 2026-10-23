@@ -30,16 +30,16 @@ export function scoreChoices(choices: string[]): { character: CharacterKey; scor
   if (!Array.isArray(choices) || choices.length !== 8) throw new Error("Exactly 8 answers required");
   const scores: Scores = { james: 0, maria: 0, angela: 0, eddie: 0, laura: 0 };
   choices.forEach((c, i) => {
-    if (!QUESTION_CHOICES[i].includes(c)) throw new Error(`Invalid answer for question ${i + 1}`);
-    scores[MATRIX[c]] += 2;
+    if (!QUESTION_CHOICES[i]?.includes(c)) throw new Error(`Invalid answer for question ${i + 1}`);
+    scores[MATRIX[c] as CharacterKey] += 2;
   });
   const max = Math.max(...Object.values(scores));
   const top = (Object.keys(scores) as CharacterKey[]).filter((k) => scores[k] === max);
-  const q7 = MATRIX[choices[6]];
-  const character = top.length === 1 ? top[0] : top.includes(q7) ? q7 : top[0];
+  const q7 = MATRIX[choices[6] as string] as CharacterKey;
+  const character = (top.length === 1 ? top[0] : top.includes(q7) ? q7 : top[0]) as CharacterKey;
   return { character, scores };
 }
 
 export function randomChoices(): string[] {
-  return QUESTION_CHOICES.map((opts) => opts[Math.floor(Math.random() * opts.length)]);
+  return QUESTION_CHOICES.map((opts) => opts[Math.floor(Math.random() * opts.length)] as string);
 }

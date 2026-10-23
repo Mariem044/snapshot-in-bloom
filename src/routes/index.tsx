@@ -26,7 +26,7 @@ function shuffle<T>(a: T[]): T[] {
   const b = [...a];
   for (let i = b.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [b[i], b[j]] = [b[j], b[i]];
+    [b[i], b[j]] = [b[j] as T, b[i] as T];
   }
   return b;
 }
@@ -86,7 +86,7 @@ function Game() {
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col justify-center px-5 py-20">
       {phase === "intro" && <Intro onStart={start} previous={previous} onShowPrevious={() => { setResult(previous); setPhase("result"); }} />}
       {phase === "test" && (
-        <Scene key={step} index={step} q={shuffled[step]} onChoose={choose} />
+        <Scene key={step} index={step} q={shuffled[step]!} onChoose={choose} />
       )}
       {phase === "submitting" && (
         <div className="fade-scene text-center">
