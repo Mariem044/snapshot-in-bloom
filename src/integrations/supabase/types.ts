@@ -14,7 +14,97 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      answers: {
+        Row: {
+          choice_id: string
+          created_at: string
+          id: string
+          player_id: string
+          question_id: number
+        }
+        Insert: {
+          choice_id: string
+          created_at?: string
+          id?: string
+          player_id: string
+          question_id: number
+        }
+        Update: {
+          choice_id?: string
+          created_at?: string
+          id?: string
+          player_id?: string
+          question_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          created_at: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      results: {
+        Row: {
+          character: string
+          created_at: string
+          id: string
+          player_id: string
+          score_angela: number
+          score_eddie: number
+          score_james: number
+          score_laura: number
+          score_maria: number
+        }
+        Insert: {
+          character: string
+          created_at?: string
+          id?: string
+          player_id: string
+          score_angela?: number
+          score_eddie?: number
+          score_james?: number
+          score_laura?: number
+          score_maria?: number
+        }
+        Update: {
+          character?: string
+          created_at?: string
+          id?: string
+          player_id?: string
+          score_angela?: number
+          score_eddie?: number
+          score_james?: number
+          score_laura?: number
+          score_maria?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "results_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,0 +1,14 @@
+CREATE TABLE public.players (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.answers (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), player_id uuid NOT NULL REFERENCES public.players(id) ON DELETE CASCADE, question_id int NOT NULL, choice_id text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.results (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), player_id uuid NOT NULL REFERENCES public.players(id) ON DELETE CASCADE, character text NOT NULL, score_james int NOT NULL DEFAULT 0, score_maria int NOT NULL DEFAULT 0, score_angela int NOT NULL DEFAULT 0, score_eddie int NOT NULL DEFAULT 0, score_laura int NOT NULL DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now());
+GRANT INSERT ON public.players, public.answers, public.results TO anon, authenticated;
+GRANT SELECT ON public.results TO anon, authenticated;
+GRANT ALL ON public.players, public.answers, public.results TO service_role;
+ALTER TABLE public.players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.answers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.results ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anon insert players" ON public.players FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "anon insert answers" ON public.answers FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "anon insert results" ON public.results FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "public read results" ON public.results FOR SELECT TO anon, authenticated USING (true);
+ALTER PUBLICATION supabase_realtime ADD TABLE public.results;
