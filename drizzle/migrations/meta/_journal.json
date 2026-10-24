@@ -8,6 +8,13 @@
       "when": 1792771954172,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792869833191,
+      "tag": "0001_add_axes_predictions_settings",
+      "breakpoints": true
     }
   ]
 }

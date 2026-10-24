@@ -1,0 +1,11 @@
+ALTER TABLE public.results ADD COLUMN score_guilt int NOT NULL DEFAULT 0;
+ALTER TABLE public.results ADD COLUMN score_denial int NOT NULL DEFAULT 0;
+ALTER TABLE public.results ADD COLUMN score_fight int NOT NULL DEFAULT 0;
+ALTER TABLE public.results ADD COLUMN score_hope int NOT NULL DEFAULT 0;
+ALTER TABLE public.players ADD COLUMN prediction text;
+CREATE TABLE public.settings (key text PRIMARY KEY, value text NOT NULL);
+GRANT SELECT ON public.settings TO anon, authenticated;
+GRANT ALL ON public.settings TO service_role;
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read settings" ON public.settings FOR SELECT TO anon, authenticated USING (true);
+ALTER PUBLICATION supabase_realtime ADD TABLE public.settings;

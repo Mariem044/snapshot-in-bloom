@@ -50,14 +50,17 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          prediction: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          prediction?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          prediction?: string | null
         }
         Relationships: []
       }
@@ -68,7 +71,11 @@ export type Database = {
           id: string
           player_id: string
           score_angela: number
+          score_denial: number
           score_eddie: number
+          score_fight: number
+          score_guilt: number
+          score_hope: number
           score_james: number
           score_laura: number
           score_maria: number
@@ -79,7 +86,11 @@ export type Database = {
           id?: string
           player_id: string
           score_angela?: number
+          score_denial?: number
           score_eddie?: number
+          score_fight?: number
+          score_guilt?: number
+          score_hope?: number
           score_james?: number
           score_laura?: number
           score_maria?: number
@@ -90,7 +101,11 @@ export type Database = {
           id?: string
           player_id?: string
           score_angela?: number
+          score_denial?: number
           score_eddie?: number
+          score_fight?: number
+          score_guilt?: number
+          score_hope?: number
           score_james?: number
           score_laura?: number
           score_maria?: number
@@ -104,6 +119,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      settings: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
       }
     }
     Views: {
