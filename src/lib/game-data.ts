@@ -1,7 +1,9 @@
 // Client-safe game content. Choice ids are opaque; the character mapping lives only on the server.
 export type CharacterKey = "james" | "maria" | "angela" | "eddie" | "laura";
+export type AnyCharacterKey = CharacterKey | "hidden";
 
 export const CHARACTER_KEYS: CharacterKey[] = ["james", "maria", "angela", "eddie", "laura"];
+export const HIDDEN_KEY: AnyCharacterKey = "hidden";
 
 export type Question = { id: number; scene: string; choices: { id: string; text: string }[] };
 
@@ -65,18 +67,19 @@ export const QUESTIONS: Question[] = [
 ];
 
 export type Character = {
-  key: CharacterKey;
+  key: AnyCharacterKey;
   name: string;
   epithet: string;
   sigil: string;
   summary: string;
   traits: string[];
   coping: { label: string; text: string }[];
+  question: string;
   colorClass: string;
   bgClass: string;
 };
 
-export const CHARACTERS: Record<CharacterKey, Character> = {
+export const CHARACTERS: Record<AnyCharacterKey, Character> = {
   james: {
     key: "james", name: "James", epithet: "The One Who Forgets", sigil: "✉",
     summary: "You carry guilt like a letter you refuse to reread. You keep walking forward, hoping the fog will hide what you already know.",
@@ -86,6 +89,7 @@ export const CHARACTERS: Record<CharacterKey, Character> = {
       { label: "Strength", text: "You keep going when others would stop." },
       { label: "Shadow", text: "What you bury tends to come back with a face." },
     ],
+    question: "What are you refusing to look at?",
     colorClass: "text-char-james", bgClass: "bg-char-james",
   },
   maria: {
@@ -97,6 +101,7 @@ export const CHARACTERS: Record<CharacterKey, Character> = {
       { label: "Strength", text: "You make others feel seen and less alone." },
       { label: "Shadow", text: "You may give pieces of yourself to keep people near." },
     ],
+    question: "Who would you be if no one needed you?",
     colorClass: "text-char-maria", bgClass: "bg-char-maria",
   },
   angela: {
@@ -108,6 +113,7 @@ export const CHARACTERS: Record<CharacterKey, Character> = {
       { label: "Strength", text: "Profound empathy for others who suffer." },
       { label: "Shadow", text: "You may believe you don't deserve kindness." },
     ],
+    question: "What would you say if you believed someone would stay to hear it?",
     colorClass: "text-char-angela", bgClass: "bg-char-angela",
   },
   eddie: {
@@ -119,6 +125,7 @@ export const CHARACTERS: Record<CharacterKey, Character> = {
       { label: "Strength", text: "You refuse to be pushed around." },
       { label: "Shadow", text: "You can wound the people who were never a threat." },
     ],
+    question: "What would people see if you lowered your fists?",
     colorClass: "text-char-eddie", bgClass: "bg-char-eddie",
   },
   laura: {
@@ -130,8 +137,38 @@ export const CHARACTERS: Record<CharacterKey, Character> = {
       { label: "Strength", text: "Clarity that cuts through everyone's fog." },
       { label: "Shadow", text: "Your bluntness can land harder than you intend." },
     ],
+    question: "When did you last let someone else be right?",
     colorClass: "text-char-laura", bgClass: "bg-char-laura",
+  },
+  hidden: {
+    key: "hidden", name: "The Hidden Ending", epithet: "The One Who Left Town", sigil: "?",
+    summary: "Almost no one answers the way you did. Every scene, the same quiet instinct — as if you had already walked this town once and knew which doors to skip. The fog never really caught you.",
+    traits: ["Uncanny", "Consistent", "Hard to read", "One step outside the story"],
+    coping: [
+      { label: "Defense", text: "Pattern — you answer every fear the same way, and it works." },
+      { label: "Strength", text: "A clarity so steady the town can't build a monster for you." },
+      { label: "Shadow", text: "People who leave town early never learn what they were running from." },
+    ],
+    question: "What would you do with a second chance no one else gets?",
+    colorClass: "text-char-hidden", bgClass: "bg-char-hidden",
   },
 };
 
 export const COMPLETED_KEY = "sh2_test_completed";
+
+export type CompletedStore = { character?: AnyCharacterKey; playerId?: string; prediction?: CharacterKey; at?: number };
+
+export function readCompleted(): CompletedStore {
+  try {
+    const raw = localStorage.getItem(COMPLETED_KEY);
+    return raw ? (JSON.parse(raw) as CompletedStore) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeCompleted(patch: CompletedStore) {
+  try {
+    localStorage.setItem(COMPLETED_KEY, JSON.stringify({ ...readCompleted(), ...patch }));
+  } catch { /* ignore */ }
+}

@@ -1,10 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { CHARACTERS, COMPLETED_KEY, QUESTIONS, type CharacterKey } from "@/lib/game-data";
-import { submitTest } from "@/lib/game.functions";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  CHARACTERS,
+  QUESTIONS,
+  readCompleted,
+  writeCompleted,
+  type AnyCharacterKey,
+  type CharacterKey,
+} from "@/lib/game-data";
+import { predictWinner, submitTest } from "@/lib/game.functions";
+import { statsQuery } from "@/lib/stats-query";
 import { QrButton } from "@/components/QrModal";
 import { Sigil } from "@/components/Sigil";
+import { RadarChart } from "@/components/RadarChart";
+import { PredictionScreen } from "@/components/PredictionScreen";
+import type { AxisKey } from "@/lib/scoring.server";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,7 +33,16 @@ export const Route = createFileRoute("/")({
   component: Game,
 });
 
-type Phase = "intro" | "test" | "submitting" | "result";
+type Phase = "intro" | "test" | "submitting" | "predict" | "result";
+type Axes = Record<AxisKey, number>;
+type Percentile = { axis: AxisKey; pct: number } | null;
+
+const AXIS_PHRASE: Record<AxisKey, string> = {
+  guilt: "guilt-driven",
+  denial: "denial-prone",
+  fight: "fight-ready",
+  hope: "hopeful",
+};
 
 function shuffle<T>(a: T[]): T[] {
   const b = [...a];
@@ -33,22 +55,21 @@ function shuffle<T>(a: T[]): T[] {
 
 function Game() {
   const submit = useServerFn(submitTest);
+  const predict = useServerFn(predictWinner);
   const [phase, setPhase] = useState<Phase>("intro");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [seed, setSeed] = useState(0);
-  const [result, setResult] = useState<CharacterKey | null>(null);
-  const [previous, setPrevious] = useState<CharacterKey | null>(null);
+  const [result, setResult] = useState<AnyCharacterKey | null>(null);
+  const [axes, setAxes] = useState<Axes | null>(null);
+  const [percentile, setPercentile] = useState<Percentile>(null);
+  const [previous, setPrevious] = useState<AnyCharacterKey | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(COMPLETED_KEY);
-      if (raw) {
-        const v = JSON.parse(raw) as { character?: CharacterKey };
-        if (v.character && CHARACTERS[v.character]) setPrevious(v.character);
-      }
-    } catch { /* ignore */ }
+    const v = readCompleted();
+    if (v.character && CHARACTERS[v.character]) setPrevious(v.character);
   }, []);
 
   const shuffled = useMemo(() => QUESTIONS.map((q) => ({ ...q, choices: shuffle(q.choices) })), [seed]);
@@ -66,13 +87,30 @@ function Game() {
     setError(null);
     try {
       const r = await submit({ data: { choices: all } });
-      localStorage.setItem(COMPLETED_KEY, JSON.stringify({ character: r.character, at: Date.now() }));
+      writeCompleted({ character: r.character, playerId: r.playerId, at: Date.now() });
       setPrevious(r.character);
       setResult(r.character);
-      setPhase("result");
+      setAxes(r.axes);
+      setPercentile(r.percentile);
+      setPhase("predict");
     } catch {
       setError("The radio went silent. Your answers could not be sent.");
     }
+  };
+
+  const onPredict = async (c: CharacterKey) => {
+    const { playerId } = readCompleted();
+    setBusy(true);
+    try {
+      if (playerId) {
+        const r = await predict({ data: { playerId, prediction: c } });
+        writeCompleted({ prediction: (r.prediction as CharacterKey) ?? c });
+      } else {
+        writeCompleted({ prediction: c });
+      }
+    } catch { /* prediction is optional; don't block the result */ }
+    setBusy(false);
+    setPhase("result");
   };
 
   const choose = (id: string) => {
@@ -102,12 +140,13 @@ function Game() {
           )}
         </div>
       )}
-      {phase === "result" && result && <Result k={result} />}
+      {phase === "predict" && <PredictionScreen onPredict={onPredict} busy={busy} />}
+      {phase === "result" && result && <Result k={result} axes={axes} percentile={percentile} />}
     </main>
   );
 }
 
-function Intro({ onStart, previous, onShowPrevious }: { onStart: () => void; previous: CharacterKey | null; onShowPrevious: () => void }) {
+function Intro({ onStart, previous, onShowPrevious }: { onStart: () => void; previous: AnyCharacterKey | null; onShowPrevious: () => void }) {
   return (
     <section className="fade-scene text-center">
       <p className="font-display text-xs uppercase tracking-[0.4em] text-primary">Silent Hill · Toluca Lake</p>
@@ -163,20 +202,69 @@ function Scene({ q, index, onChoose }: { q: (typeof QUESTIONS)[number]; index: n
   );
 }
 
-function Result({ k }: { k: CharacterKey }) {
+function Result({ k, axes, percentile }: { k: AnyCharacterKey; axes: Axes | null; percentile: Percentile }) {
   const c = CHARACTERS[k];
+  const qc = useQueryClient();
+  const { data: stats } = useQuery(statsQuery);
+
+  useEffect(() => {
+    const ch = supabase
+      .channel(`result-card-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "results" }, () => {
+        qc.invalidateQueries({ queryKey: ["class-stats"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
+  const total = stats?.total ?? 0;
+  const mine = stats?.counts[k] ?? 0;
+  const pct = total ? Math.round((mine / total) * 100) : 0;
+  const isFavorite = stats?.dominant === k && total > 1;
+  const rarity =
+    k === "hidden"
+      ? { label: "Hidden ending", text: "Almost nobody finds this." }
+      : total < 2
+        ? null
+        : isFavorite
+          ? { label: "The class favorite", text: `${pct}% of the class is ${c.name}.` }
+          : pct < 15
+            ? { label: "Rare", text: `Only ${pct}% of the class is ${c.name}.` }
+            : { label: "Common", text: `${pct}% of the class is ${c.name}.` };
+
   return (
     <section className="reveal paper-card rounded-lg p-6 text-center sm:p-8">
       <p className="font-display text-xs uppercase tracking-[0.4em] text-muted-foreground">In Silent Hill, you are</p>
       <div className="mt-6 flex justify-center"><Sigil c={c} /></div>
       <h1 className={`mt-6 font-hand text-5xl ${c.colorClass}`}>{c.name}</h1>
       <p className="mt-2 font-display text-muted-foreground">{c.epithet}</p>
+
+      {rarity && (
+        <p className="mt-4 inline-block rounded border border-primary/50 px-3 py-1.5 font-display text-xs uppercase tracking-widest text-primary">
+          {rarity.label} <span className="ml-1 normal-case tracking-normal text-muted-foreground">{rarity.text}</span>
+        </p>
+      )}
+
       <p className="mt-6 text-left leading-relaxed text-foreground">{c.summary}</p>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         {c.traits.map((t) => (
           <span key={t} className="rounded border border-border px-2.5 py-1 text-xs text-muted-foreground">{t}</span>
         ))}
       </div>
+
+      {axes && (
+        <div className="mt-8">
+          <h3 className="text-left font-display text-lg text-primary">Your shape in the fog</h3>
+          <div className="mt-3"><RadarChart student={axes} average={stats && stats.total > 0 ? stats.axes : null} /></div>
+          <p className="mt-1 text-xs text-muted-foreground">Your shape, against the class average.</p>
+          {percentile && (
+            <p className="mt-3 font-display text-sm text-bone">
+              You are more {AXIS_PHRASE[percentile.axis]} than {percentile.pct}% of the class.
+            </p>
+          )}
+        </div>
+      )}
+
       <h3 className="mt-8 text-left font-display text-lg text-primary">How you cope</h3>
       <dl className="mt-3 space-y-3 text-left">
         {c.coping.map((x) => (
@@ -186,6 +274,12 @@ function Result({ k }: { k: CharacterKey }) {
           </div>
         ))}
       </dl>
+
+      <blockquote className="mt-8 rounded border border-border bg-background/40 p-4 text-left">
+        <p className="font-display text-xs uppercase tracking-widest text-muted-foreground">Talk about it</p>
+        <p className="mt-1 font-hand text-lg text-bone">{c.question}</p>
+      </blockquote>
+
       <div className="mt-8 flex flex-col items-center gap-3">
         <Link to="/results" className="w-full rounded bg-primary px-6 py-4 font-display text-lg text-primary-foreground shadow-[var(--glow-crimson)] transition hover:brightness-110">
           See Class Results
