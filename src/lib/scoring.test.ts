@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { scoreChoices } from "./scoring.server";
+import { randomChoices, scoreChoices } from "./scoring.server";
 
 describe("scoreChoices", () => {
   it("gives +2 per choice to the matching character", () => {

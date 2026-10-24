@@ -1,13 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getClassStats } from "@/lib/game.functions";
-import { CHARACTERS, CHARACTER_KEYS, type CharacterKey } from "@/lib/game-data";
+import { predictWinner } from "@/lib/game.functions";
+import { statsQuery } from "@/lib/stats-query";
+import {
+  CHARACTERS,
+  CHARACTER_KEYS,
+  HIDDEN_KEY,
+  readCompleted,
+  writeCompleted,
+  type AnyCharacterKey,
+  type CharacterKey,
+} from "@/lib/game-data";
 import { Sigil } from "@/components/Sigil";
 import { QrButton } from "@/components/QrModal";
-
-const statsQuery = queryOptions({ queryKey: ["class-stats"], queryFn: () => getClassStats(), refetchInterval: 15000 });
+import { PredictionScreen } from "@/components/PredictionScreen";
 
 export const Route = createFileRoute("/results")({
   head: () => ({
@@ -27,7 +36,22 @@ export const Route = createFileRoute("/results")({
 function Results() {
   const qc = useQueryClient();
   const { data } = useSuspenseQuery(statsQuery);
-  const [active, setActive] = useState<CharacterKey | null>(null);
+  const predict = useServerFn(predictWinner);
+  const [active, setActive] = useState<AnyCharacterKey | null>(null);
+  const [mustPredict, setMustPredict] = useState(false);
+  const [ownGuess, setOwnGuess] = useState<CharacterKey | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Reveal animation state: bars rise one by one (lowest first), then a drumroll, then the banner.
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const wasRevealed = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    const done = readCompleted();
+    if (done.prediction) setOwnGuess(done.prediction);
+    if (done.playerId && !done.prediction) setMustPredict(true);
+  }, []);
 
   useEffect(() => {
     const ch = supabase
@@ -35,23 +59,91 @@ function Results() {
       .on("postgres_changes", { event: "*", schema: "public", table: "results" }, () => {
         qc.invalidateQueries({ queryKey: ["class-stats"] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "settings" }, () => {
+        qc.invalidateQueries({ queryKey: ["class-stats"] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
+  useEffect(() => {
+    if (wasRevealed.current === null) {
+      // First load: if already revealed, no animation for late joiners.
+      wasRevealed.current = data.revealed;
+      if (data.revealed) setBannerVisible(true);
+      return;
+    }
+    if (data.revealed && !wasRevealed.current) {
+      wasRevealed.current = true;
+      setAnimating(true);
+      const t = setTimeout(() => {
+        setBannerVisible(true);
+        setAnimating(false);
+      }, CHARACTER_KEYS.length * 350 + 1200);
+      return () => clearTimeout(t);
+    }
+    if (!data.revealed) wasRevealed.current = false;
+  }, [data.revealed]);
+
+  const onPredict = async (c: CharacterKey) => {
+    const { playerId } = readCompleted();
+    setBusy(true);
+    try {
+      if (playerId) {
+        const r = await predict({ data: { playerId, prediction: c } });
+        const saved = (r.prediction as CharacterKey) ?? c;
+        writeCompleted({ prediction: saved });
+        setOwnGuess(saved);
+      } else {
+        writeCompleted({ prediction: c });
+        setOwnGuess(c);
+      }
+    } catch { /* ignore */ }
+    setBusy(false);
+    setMustPredict(false);
+    qc.invalidateQueries({ queryKey: ["class-stats"] });
+  };
+
+  if (mustPredict) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col justify-center px-5 py-20">
+        <PredictionScreen onPredict={onPredict} busy={busy} />
+      </main>
+    );
+  }
+
+  if (!data.revealed) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col items-center justify-center px-5 py-20 text-center">
+        <p className="font-display text-xs uppercase tracking-[0.4em] text-primary">Live · Class Results</p>
+        <h1 className="title-distressed mt-6 text-4xl sm:text-5xl">The fog hasn't lifted yet…</h1>
+        <p className="mt-6 max-w-sm text-muted-foreground fade-scene">
+          The presenter is still gathering the class's answers. Stay here — this page will clear on its own.
+        </p>
+        <p className="mt-10 font-display text-sm text-muted-foreground drumroll">{data.total} {data.total === 1 ? "soul" : "souls"} in the fog so far</p>
+      </main>
+    );
+  }
+
   const sorted = [...CHARACTER_KEYS].sort((a, b) => data.counts[b] - data.counts[a]);
   const dominant = data.total > 0 ? sorted[0] : null;
-  const pct = (k: CharacterKey) => (data.total ? Math.round((data.counts[k] / data.total) * 100) : 0);
+  const pct = (k: AnyCharacterKey) => (data.total ? Math.round((data.counts[k] / data.total) * 100) : 0);
+  const hiddenCount = data.counts[HIDDEN_KEY];
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-20">
       <p className="font-display text-xs uppercase tracking-[0.4em] text-primary">Live · Class Results</p>
       <h1 className="title-distressed mt-3 text-4xl sm:text-5xl">Who is the class?</h1>
-      <p className="mt-3 font-display text-lg text-muted-foreground">
+
+      <p className="paper-card mt-6 rounded-lg p-4 font-display text-lg leading-snug text-bone fade-scene">
+        {data.verdict}
+      </p>
+
+      <p className="mt-4 font-display text-lg text-muted-foreground">
         <span className="text-3xl text-bone">{data.total}</span> {data.total === 1 ? "soul has" : "souls have"} entered the fog
       </p>
 
-      {dominant && (
+      {dominant && bannerVisible && (
         <div className="paper-card reveal mt-8 flex items-center gap-5 rounded-lg p-5">
           <Sigil c={CHARACTERS[dominant]} size="sm" />
           <div>
@@ -61,11 +153,18 @@ function Results() {
           </div>
         </div>
       )}
+      {dominant && !bannerVisible && (
+        <p className="drumroll mt-8 text-center font-display text-sm uppercase tracking-[0.3em] text-muted-foreground">
+          The fog is lifting…
+        </p>
+      )}
 
       <ul className="mt-8 space-y-3">
-        {sorted.map((k) => {
+        {sorted.map((k, displayIndex) => {
           const c = CHARACTERS[k];
           const on = active === k;
+          // Lowest count rises first.
+          const delay = animating ? (sorted.length - 1 - displayIndex) * 350 : 0;
           return (
             <li key={k}>
               <button
@@ -80,14 +179,52 @@ function Results() {
                   </span>
                 </div>
                 <div className="mt-2 h-3 w-full overflow-hidden rounded bg-muted">
-                  <div className={`h-full ${c.bgClass} transition-all duration-1000`} style={{ width: `${pct(k)}%` }} />
+                  <div
+                    className={`h-full ${c.bgClass} ${animating ? "bar-rise" : "transition-all duration-1000"}`}
+                    style={{ width: `${pct(k)}%`, animationDelay: `${delay}ms` }}
+                  />
                 </div>
                 {on && <p className="mt-3 text-sm text-muted-foreground fade-scene">{c.summary}</p>}
               </button>
             </li>
           );
         })}
+        {/* Mystery bar: the hidden ending stays "???" until someone finds it. */}
+        <li>
+          <div className="choice-btn block cursor-default opacity-80">
+            <div className="flex items-baseline justify-between">
+              <span className={`font-display text-lg ${hiddenCount > 0 ? CHARACTERS.hidden.colorClass : "text-muted-foreground"}`}>
+                {hiddenCount > 0 ? CHARACTERS.hidden.name : "???"}
+              </span>
+              <span className="font-display text-sm text-muted-foreground">
+                {hiddenCount > 0 ? <>{hiddenCount} · <span className="text-bone">{pct(HIDDEN_KEY)}%</span></> : "someone found it?"}
+              </span>
+            </div>
+            <div className="mt-2 h-3 w-full overflow-hidden rounded bg-muted">
+              <div
+                className={`h-full ${CHARACTERS.hidden.bgClass} ${animating ? "bar-rise" : "transition-all duration-1000"}`}
+                style={{ width: `${pct(HIDDEN_KEY)}%`, animationDelay: `${animating ? sorted.length * 350 : 0}ms` }}
+              />
+            </div>
+          </div>
+        </li>
       </ul>
+
+      {data.predictions.total > 0 && (
+        <div className="paper-card mt-8 rounded-lg p-4 text-center fade-scene">
+          <p className="font-display text-sm text-muted-foreground">
+            <span className="text-2xl text-bone">{data.predictions.pct}%</span> of the class guessed right
+          </p>
+          {ownGuess && (
+            <p className="mt-2 text-sm">
+              Your guess: <span className={CHARACTERS[ownGuess].colorClass}>{CHARACTERS[ownGuess].name}</span>{" "}
+              {dominant && (ownGuess === dominant
+                ? <span className="font-display text-primary">— you called it.</span>
+                : <span className="font-display text-muted-foreground">— the fog fooled you.</span>)}
+            </p>
+          )}
+        </div>
+      )}
 
       {data.total === 0 && <p className="mt-6 text-center text-muted-foreground">No one has answered yet. Share the QR code.</p>}
 
