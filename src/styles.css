@@ -38,6 +38,7 @@
   --color-char-angela: var(--char-angela);
   --color-char-eddie: var(--char-eddie);
   --color-char-laura: var(--char-laura);
+  --color-char-hidden: var(--char-hidden);
 }
 
 :root {
@@ -68,6 +69,7 @@
   --char-angela: oklch(0.6 0.15 50);
   --char-eddie: oklch(0.65 0.13 130);
   --char-laura: oklch(0.8 0.12 95);
+  --char-hidden: oklch(0.78 0.06 290);
   --glow-crimson: 0 0 0 1px color-mix(in oklab, var(--primary) 55%, transparent),
     0 0 24px -4px color-mix(in oklab, var(--primary) 55%, transparent);
   --gradient-blood: linear-gradient(180deg, color-mix(in oklab, var(--primary) 18%, transparent), transparent 70%);
@@ -176,4 +178,21 @@
 }
 @utility reveal {
   animation: reveal 1.4s cubic-bezier(.2,.7,.2,1) both;
+}
+
+@keyframes bar-rise {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@utility bar-rise {
+  transform-origin: left;
+  animation: bar-rise 0.9s cubic-bezier(.2,.7,.2,1) both;
+}
+
+@keyframes drumroll {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@utility drumroll {
+  animation: drumroll 0.35s linear infinite;
 }
