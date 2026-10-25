@@ -9,7 +9,7 @@ import { CHARACTERS, CHARACTER_KEYS } from "@/lib/game-data";
 export const Route = createFileRoute("/admin")({
   validateSearch: (s: Record<string, unknown>) => ({
     key: typeof s['key'] === "string" ? s['key'] : "",
-    screen: typeof s['screen'] === "string" ? s['screen'] : "",
+    screen: s['screen'] != null ? String(s['screen']) : "",
   }),
   head: () => ({
     meta: [
