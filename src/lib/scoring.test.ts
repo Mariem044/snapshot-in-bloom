@@ -1,6 +1,29 @@
 import { describe, expect, it } from "vitest";
+<<<<<<< HEAD
 import { randomChoices, scoreChoices } from "./scoring.server";
 
+=======
+import { QUESTIONS } from "./game-data";
+import { randomChoices, scoreChoices } from "./scoring.server";
+
+describe("question data", () => {
+  it("keeps ids in order and uses the shorter Silent Hill text", () => {
+    expect(QUESTIONS[0]).toMatchObject({
+      id: 1,
+      scene: "You wake up in an empty, foggy town.",
+      choices: [
+        { id: "x4k", text: "Keep walking" },
+        { id: "b9r", text: "Look for someone" },
+        { id: "m2t", text: "Hide and wait" },
+        { id: "q7v", text: "Get angry" },
+        { id: "h1z", text: "Follow the sound" },
+      ],
+    });
+    expect(QUESTIONS[7]?.choices.map((c) => c.id)).toEqual(["w7j", "g3s", "t6y", "n2a", "z8o"]);
+  });
+});
+
+>>>>>>> 5ba2b08 (Initial commit)
 describe("scoreChoices", () => {
   it("gives +2 per choice to the matching character", () => {
     const r = scoreChoices(["x4k", "p3w", "e7s", "z5l", "s4e", "i6p", "f2v", "w7j"]);

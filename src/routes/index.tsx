@@ -17,7 +17,11 @@ import { QrButton } from "@/components/QrModal";
 import { Sigil } from "@/components/Sigil";
 import { RadarChart } from "@/components/RadarChart";
 import { PredictionScreen } from "@/components/PredictionScreen";
+<<<<<<< HEAD
 import type { AxisKey } from "@/lib/scoring.server";
+=======
+import { scoreChoices, type AxisKey } from "@/lib/scoring.server";
+>>>>>>> 5ba2b08 (Initial commit)
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,6 +65,10 @@ function Game() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [seed, setSeed] = useState(0);
   const [result, setResult] = useState<AnyCharacterKey | null>(null);
+<<<<<<< HEAD
+=======
+  const [runnerUp, setRunnerUp] = useState<AnyCharacterKey | null>(null);
+>>>>>>> 5ba2b08 (Initial commit)
   const [axes, setAxes] = useState<Axes | null>(null);
   const [percentile, setPercentile] = useState<Percentile>(null);
   const [previous, setPrevious] = useState<AnyCharacterKey | null>(null);
@@ -90,11 +98,28 @@ function Game() {
       writeCompleted({ character: r.character, playerId: r.playerId, at: Date.now() });
       setPrevious(r.character);
       setResult(r.character);
+<<<<<<< HEAD
+=======
+      setRunnerUp(r.runnerUp ?? null);
+>>>>>>> 5ba2b08 (Initial commit)
       setAxes(r.axes);
       setPercentile(r.percentile);
       setPhase("predict");
     } catch {
+<<<<<<< HEAD
       setError("The radio went silent. Your answers could not be sent.");
+=======
+      const fallback = scoreChoices(all);
+      const ordered = (Object.keys(fallback.scores) as CharacterKey[]).sort((a, b) => fallback.scores[b] - fallback.scores[a]);
+      const localRunnerUp = ordered[1] ?? null;
+      writeCompleted({ character: fallback.character, at: Date.now() });
+      setPrevious(fallback.character);
+      setResult(fallback.character);
+      setRunnerUp(localRunnerUp ?? null);
+      setAxes(fallback.axes);
+      setPercentile(null);
+      setPhase("predict");
+>>>>>>> 5ba2b08 (Initial commit)
     }
   };
 
@@ -141,7 +166,11 @@ function Game() {
         </div>
       )}
       {phase === "predict" && <PredictionScreen onPredict={onPredict} busy={busy} />}
+<<<<<<< HEAD
       {phase === "result" && result && <Result k={result} axes={axes} percentile={percentile} />}
+=======
+      {phase === "result" && result && <Result k={result} axes={axes} percentile={percentile} runnerUp={runnerUp} />}
+>>>>>>> 5ba2b08 (Initial commit)
     </main>
   );
 }
@@ -202,6 +231,7 @@ function Scene({ q, index, onChoose }: { q: (typeof QUESTIONS)[number]; index: n
   );
 }
 
+<<<<<<< HEAD
 function Result({ k, axes, percentile }: { k: AnyCharacterKey; axes: Axes | null; percentile: Percentile }) {
   const c = CHARACTERS[k];
   const qc = useQueryClient();
@@ -286,6 +316,32 @@ function Result({ k, axes, percentile }: { k: AnyCharacterKey; axes: Axes | null
         </Link>
         <QrButton label="Show class QR code" />
       </div>
+=======
+function Result({ k }: { k: AnyCharacterKey; axes: Axes | null; percentile: Percentile; runnerUp: AnyCharacterKey | null }) {
+  const c = CHARACTERS[k];
+
+  return (
+    <section className="reveal paper-card rounded-lg p-6 text-center sm:p-8">
+      <p className="font-display text-[10px] uppercase tracking-[0.35em] text-muted-foreground">Your match</p>
+
+      <div className="mx-auto mt-6 flex h-52 w-full max-w-xs items-center justify-center rounded border border-primary/60 bg-black/20 p-4">
+        <div className="text-center">
+          <Sigil c={c} size="lg" />
+          <p className="mt-3 font-display text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Character photo</p>
+        </div>
+      </div>
+
+      <h1 className={`mt-6 font-hand text-4xl ${c.colorClass}`}>{c.name}</h1>
+      <p className="mt-2 font-display text-sm text-muted-foreground">{c.epithet}</p>
+
+      <p className="mt-6 font-display text-sm leading-relaxed text-bone">
+        Based on your answers, this person feels like you.
+      </p>
+
+      <p className="mt-6 font-display text-base leading-relaxed text-primary">
+        Play the game to discover your character.
+      </p>
+>>>>>>> 5ba2b08 (Initial commit)
     </section>
   );
 }

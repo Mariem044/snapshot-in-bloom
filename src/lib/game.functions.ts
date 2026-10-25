@@ -14,6 +14,11 @@ async function insertRun(choices: string[]) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { scoreChoices } = await import("./scoring.server");
   const { character, scores, axes } = scoreChoices(choices);
+<<<<<<< HEAD
+=======
+  const ranked = (Object.keys(scores) as Array<keyof typeof scores>).sort((a, b) => scores[b] - scores[a]);
+  const runnerUp = ranked[1] ?? null;
+>>>>>>> 5ba2b08 (Initial commit)
   const { data: player, error: pErr } = await supabaseAdmin.from("players").insert({}).select("id").single();
   if (pErr || !player) throw new Error("Could not save player");
   const { error: aErr } = await supabaseAdmin
@@ -34,7 +39,11 @@ async function insertRun(choices: string[]) {
     score_hope: axes.hope,
   });
   if (rErr) throw new Error("Could not save result");
+<<<<<<< HEAD
   return { character, playerId: player.id, axes };
+=======
+  return { character, playerId: player.id, axes, runnerUp };
+>>>>>>> 5ba2b08 (Initial commit)
 }
 
 export const submitTest = createServerFn({ method: "POST" })
@@ -44,7 +53,11 @@ export const submitTest = createServerFn({ method: "POST" })
     return { choices: d.choices.map((c) => c.slice(0, 8)) };
   })
   .handler(async ({ data }) => {
+<<<<<<< HEAD
     const { character, playerId, axes } = await insertRun(data.choices);
+=======
+    const { character, playerId, axes, runnerUp } = await insertRun(data.choices);
+>>>>>>> 5ba2b08 (Initial commit)
 
     // Percentile of the student's strongest axis vs the rest of the class.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -60,7 +73,11 @@ export const submitTest = createServerFn({ method: "POST" })
       const below = rows.filter((r) => (r[col] as number) < mine).length;
       percentile = { axis, pct: Math.round((below / rows.length) * 100) };
     }
+<<<<<<< HEAD
     return { character: character as AnyCharacterKey, playerId, axes, percentile };
+=======
+    return { character: character as AnyCharacterKey, playerId, axes, percentile, runnerUp: runnerUp as AnyCharacterKey | null };
+>>>>>>> 5ba2b08 (Initial commit)
   });
 
 export const predictWinner = createServerFn({ method: "POST" })

@@ -8,6 +8,7 @@ export const HIDDEN_KEY: AnyCharacterKey = "hidden";
 export type Question = { id: number; scene: string; choices: { id: string; text: string }[] };
 
 export const QUESTIONS: Question[] = [
+<<<<<<< HEAD
   { id: 1, scene: "You wake up alone in a foggy, empty town.", choices: [
     { id: "x4k", text: "Keep walking, I need to find what I came for." },
     { id: "b9r", text: "Look for anyone to talk to." },
@@ -63,6 +64,63 @@ export const QUESTIONS: Question[] = [
     { id: "t6y", text: "Wait, I'm not ready." },
     { id: "n2a", text: "Kick it open to prove I'm not scared." },
     { id: "z8o", text: "Open it and ask whoever is there for the truth." },
+=======
+  { id: 1, scene: "You wake up in an empty, foggy town.", choices: [
+    { id: "x4k", text: "Keep walking" },
+    { id: "b9r", text: "Look for someone" },
+    { id: "m2t", text: "Hide and wait" },
+    { id: "q7v", text: "Get angry" },
+    { id: "h1z", text: "Follow the sound" },
+  ]},
+  { id: 2, scene: "Someone says something painful about you.", choices: [
+    { id: "p3w", text: "Ignore it" },
+    { id: "f8n", text: "Change the subject" },
+    { id: "k5d", text: "Go quiet" },
+    { id: "r2c", text: "Snap back" },
+    { id: "u6j", text: "That's not true." },
+  ]},
+  { id: 3, scene: "You hurt someone you love.", choices: [
+    { id: "e7s", text: "Bury it" },
+    { id: "w1y", text: "Be extra kind" },
+    { id: "g4h", text: "Blame myself" },
+    { id: "t9a", text: "Explain it away" },
+    { id: "n3o", text: "Tell them" },
+  ]},
+  { id: 4, scene: "Something scary appears.", choices: [
+    { id: "z5l", text: "Face it" },
+    { id: "c2m", text: "Talk my way out" },
+    { id: "j8b", text: "Freeze" },
+    { id: "y6f", text: "Attack first" },
+    { id: "d1q", text: "Run" },
+  ]},
+  { id: 5, scene: "You find a photo of someone you lost.", choices: [
+    { id: "s4e", text: "Put it away" },
+    { id: "a9u", text: "Keep it close" },
+    { id: "v3i", text: "Cry quietly" },
+    { id: "o7g", text: "Get irritated" },
+    { id: "l2x", text: "Ask what happened" },
+  ]},
+  { id: 6, scene: "Someone offers you comfort.", choices: [
+    { id: "i6p", text: "Doubt it" },
+    { id: "h8w", text: "Take it" },
+    { id: "b1k", text: "I don't deserve it" },
+    { id: "m5r", text: "Push it away" },
+    { id: "q3t", text: "Accept it, stay honest" },
+  ]},
+  { id: 7, scene: "What do you fear most?", choices: [
+    { id: "f2v", text: "The truth about me" },
+    { id: "k9z", text: "Being alone" },
+    { id: "r4n", text: "Being hurt again" },
+    { id: "u1d", text: "Looking weak" },
+    { id: "e5c", text: "Not being believed" },
+  ]},
+  { id: 8, scene: "A door hides the truth.", choices: [
+    { id: "w7j", text: "Open it" },
+    { id: "g3s", text: "Bring someone" },
+    { id: "t6y", text: "Not ready" },
+    { id: "n2a", text: "Kick it open" },
+    { id: "z8o", text: "Open it, ask for answers" },
+>>>>>>> 5ba2b08 (Initial commit)
   ]},
 ];
 
@@ -72,6 +130,10 @@ export type Character = {
   epithet: string;
   sigil: string;
   summary: string;
+<<<<<<< HEAD
+=======
+  teaser: string;
+>>>>>>> 5ba2b08 (Initial commit)
   traits: string[];
   coping: { label: string; text: string }[];
   question: string;
@@ -83,6 +145,10 @@ export const CHARACTERS: Record<AnyCharacterKey, Character> = {
   james: {
     key: "james", name: "James", epithet: "The One Who Forgets", sigil: "✉",
     summary: "You carry guilt like a letter you refuse to reread. You keep walking forward, hoping the fog will hide what you already know.",
+<<<<<<< HEAD
+=======
+    teaser: "He came here because of a letter.",
+>>>>>>> 5ba2b08 (Initial commit)
     traits: ["Determined", "Guarded", "Self-protective", "Haunted by the past"],
     coping: [
       { label: "Defense", text: "Denial — painful truths get pushed out of sight." },
@@ -95,6 +161,10 @@ export const CHARACTERS: Record<AnyCharacterKey, Character> = {
   maria: {
     key: "maria", name: "Maria", epithet: "The One Who Stays Close", sigil: "♡",
     summary: "You find your footing through other people. Warmth is your shelter, and the silence of being alone is the scariest room in the hotel.",
+<<<<<<< HEAD
+=======
+    teaser: "She looks like someone he lost.",
+>>>>>>> 5ba2b08 (Initial commit)
     traits: ["Warm", "Charming", "Connection-seeking", "Afraid of abandonment"],
     coping: [
       { label: "Defense", text: "Seeking comfort — closeness soothes the fear." },
@@ -107,6 +177,10 @@ export const CHARACTERS: Record<AnyCharacterKey, Character> = {
   angela: {
     key: "angela", name: "Angela", epithet: "The One Who Carries It Quietly", sigil: "✦",
     summary: "You withdraw when things hurt, holding pain inside instead of letting it out. Your silence hides more depth than anyone realizes.",
+<<<<<<< HEAD
+=======
+    teaser: "She's looking for her mother.",
+>>>>>>> 5ba2b08 (Initial commit)
     traits: ["Sensitive", "Withdrawn", "Deeply feeling", "Self-critical"],
     coping: [
       { label: "Defense", text: "Withdrawal — you retreat and turn the pain inward." },
@@ -119,6 +193,10 @@ export const CHARACTERS: Record<AnyCharacterKey, Character> = {
   eddie: {
     key: "eddie", name: "Eddie", epithet: "The One Who Strikes First", sigil: "✕",
     summary: "Under the armor is insecurity. You hit back before you can be hurt, because looking weak feels more dangerous than any monster.",
+<<<<<<< HEAD
+=======
+    teaser: "He says he's fine. He isn't.",
+>>>>>>> 5ba2b08 (Initial commit)
     traits: ["Defensive", "Reactive", "Proud", "Secretly insecure"],
     coping: [
       { label: "Defense", text: "Aggression — anger shields a fragile core." },
@@ -131,6 +209,10 @@ export const CHARACTERS: Record<AnyCharacterKey, Character> = {
   laura: {
     key: "laura", name: "Laura", epithet: "The One the Fog Can't Touch", sigil: "☀",
     summary: "You see things as they are. Stubborn, direct, and honest, you trust your own reality — the town simply has less to show you.",
+<<<<<<< HEAD
+=======
+    teaser: "She isn't afraid of this town.",
+>>>>>>> 5ba2b08 (Initial commit)
     traits: ["Direct", "Stubborn", "Honest", "Curious"],
     coping: [
       { label: "Defense", text: "Confrontation — you name the truth out loud." },
@@ -143,6 +225,10 @@ export const CHARACTERS: Record<AnyCharacterKey, Character> = {
   hidden: {
     key: "hidden", name: "The Hidden Ending", epithet: "The One Who Left Town", sigil: "?",
     summary: "Almost no one answers the way you did. Every scene, the same quiet instinct — as if you had already walked this town once and knew which doors to skip. The fog never really caught you.",
+<<<<<<< HEAD
+=======
+    teaser: "Almost nobody finds this ending.",
+>>>>>>> 5ba2b08 (Initial commit)
     traits: ["Uncanny", "Consistent", "Hard to read", "One step outside the story"],
     coping: [
       { label: "Defense", text: "Pattern — you answer every fear the same way, and it works." },
