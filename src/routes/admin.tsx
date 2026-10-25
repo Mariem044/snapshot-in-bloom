@@ -9,7 +9,7 @@ import { CHARACTERS, CHARACTER_KEYS } from "@/lib/game-data";
 export const Route = createFileRoute("/admin")({
   validateSearch: (s: Record<string, unknown>) => ({
     key: typeof s['key'] === "string" ? s['key'] : "",
-    screen: typeof s['screen'] === "string" ? s['screen'] : "",
+    screen: s['screen'] != null ? String(s['screen']) : "",
   }),
   head: () => ({
     meta: [
@@ -117,6 +117,7 @@ function Admin() {
           disabled={busy}
           onClick={() => run(() => reveal({ data: { key, revealed: !stats.revealed } }))}
           aria-pressed={stats.revealed}
+          aria-label="Reveal class results"
           className={`relative h-8 w-14 rounded-full border transition disabled:opacity-50 ${
             stats.revealed ? "border-primary bg-primary/30" : "border-border bg-muted"
           }`}

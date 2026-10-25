@@ -67,22 +67,23 @@ function Results() {
   }, [qc]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
     if (wasRevealed.current === null) {
       // First load: if already revealed, no animation for late joiners.
       wasRevealed.current = data.revealed;
       if (data.revealed) setBannerVisible(true);
-      return;
-    }
-    if (data.revealed && !wasRevealed.current) {
+    } else if (data.revealed && !wasRevealed.current) {
       wasRevealed.current = true;
       setAnimating(true);
       const t = setTimeout(() => {
         setBannerVisible(true);
         setAnimating(false);
       }, CHARACTER_KEYS.length * 350 + 1200);
-      return () => clearTimeout(t);
+      cleanup = () => clearTimeout(t);
+    } else if (!data.revealed) {
+      wasRevealed.current = false;
     }
-    if (!data.revealed) wasRevealed.current = false;
+    return cleanup;
   }, [data.revealed]);
 
   const onPredict = async (c: CharacterKey) => {
